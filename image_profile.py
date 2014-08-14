@@ -52,6 +52,30 @@ def datafit(N_FILES):
 		x_start = x_loc[0][0]
 		x_end = x_loc[0][-1] + 40
 
-		matshow(new_ob[:, x_start:x_end])
+		fit_start = new_ob[:, :x_start]
+		fit_end = new_ob[:, x_end:]
+		fit = np.hstack((fit_start,fit_end))
 
+		#SKETCH
+		x_points = fit[1,:]
+		y_points = fit[:,1]
+		m,n = shape(fit)
+		xp=np.linspace(0,m,m, endpoint=False)
+		yp=np.linspace(0,n,n, endpoint=False)
 
+		xg,yg = meshgrid(x_points, y_points)
+
+		fitfunc = lambda p,x,y: p[0] + p[1]*y + p[2]*x + p[3]*x*y \
+		+ p[4]*(y**2) + p[5]*(y**2)*x + p[6]*(x**2) + p[7]*(x**2)*y \
+		+ p[8]*(x**2)*(y**2)
+		errfunc = lambda p,x,y: np.subtract(fitfunc(p,x,y).flatten(), fit.flatten())
+
+		p0 = [1, 1, 1, 1, 1, 1, 1, 1, 1]
+		p1, success = optimize.leastsq(errfunc, p0[:], args=(xg, yg))
+
+		xt = new_ob[1,:]
+		yt = new_ob[:,1]
+
+		xgt,ygt = meshgrid(xt,yt)
+		corr = fitfunc(p1,xgt,ygt)
+		new_img = np.subtract(new_ob, corr)
