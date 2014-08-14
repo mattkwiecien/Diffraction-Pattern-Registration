@@ -56,6 +56,19 @@ def datafit(N_FILES):
 		fit_end = new_ob[:, x_end:]
 		fit = np.hstack((fit_start,fit_end))
 
+		r = sp.zeros((2,x_len*y_len))
+		z = sp.zeros((x_len*y_len))
+		cnt=0
+		for i in range(y_len):
+			for j in range(x_len):
+				if j>f1_start and j<f2_start:
+					pass
+				else:
+					r[cnt] = (i,j)
+					z[cnt] = new_ob[r[i,j]]
+
+				cnt+=1
+
 		#SKETCH
 		x_points = fit[1,:]
 		y_points = fit[:,1]
@@ -65,13 +78,13 @@ def datafit(N_FILES):
 
 		xg,yg = meshgrid(x_points, y_points)
 
-		fitfunc = lambda p,x,y: p[0] + p[1]*y + p[2]*x + p[3]*x*y \
-		+ p[4]*(y**2) + p[5]*(y**2)*x + p[6]*(x**2) + p[7]*(x**2)*y \
-		+ p[8]*(x**2)*(y**2)
-		errfunc = lambda p,x,y: np.subtract(fitfunc(p,x,y).flatten(), fit.flatten())
+		fitfunc = lambda p, r: p[0] + p[1]*r[1] + p[2]*r[0] + p[3]*r[0]*r[1]\
+		+ p[4]*(r[1]**2) + p[5]*(r[1]**2)*r[0] + p[6]*(r[0]**2) + p[7]*(r[0]**2)*r[1] \
+		+ p[8]*(r[0]**2)*(r[1]**2)
+		errfunc = lambda p,r,z: abs(fitfunc(p,r)-z)
 
 		p0 = [1, 1, 1, 1, 1, 1, 1, 1, 1]
-		p1, success = optimize.leastsq(errfunc, p0[:], args=(xg, yg))
+		p1, success = optimize.leastsq(errfunc, p0[:], args=(r,z))
 
 		xt = new_ob[1,:]
 		yt = new_ob[:,1]
