@@ -21,7 +21,7 @@ def crop(N_FILES):
 		yi,yf = c[0][0], c[0][-1]
 		xi,xf = d[0][0], d[0][-1]
 
-		new_ob = np.angle(ob[(yi+40):(yf-10), (xi+20):(xf-20)])
+		new_ob = np.angle(ob[(yi+20):(yf-20), (xi+20):(xf-20)])
 
 		imsave('/mnt/xfm0/people/kwiecien/opt_obj/raw_cropped/'+angle_fn+'.png', new_ob, cmap=cm.hsv)
 
@@ -42,3 +42,16 @@ def datafit(N_FILES):
 
 		yi,yf = c[0][0], c[0][-1]
 		xi,xf = d[0][0], d[0][-1]
+
+		new_ob = np.angle(ob[yi+20:yf-20, xi+20:xf-20])
+
+		x_len, y_len = shape(new_ob)
+		x_dim = new_ob[x_len-1,:]
+		x_diff = np.diff(x_dim[:800])
+		x_loc = np.where(abs(x_diff)>1.5)
+		x_start = x_loc[0][0]
+		x_end = x_loc[0][-1] + 40
+
+		matshow(new_ob[:, x_start:x_end])
+
+
