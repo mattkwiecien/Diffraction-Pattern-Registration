@@ -45,13 +45,15 @@ def datafit(N_FILES):
 
 		new_ob = np.angle(ob[yi+20:yf-20, xi+20:xf-20])
 		x_len, y_len = shape(new_ob)
+		ob_ave = new_ob / np.average(new_ob)
 
-		x_dim = new_ob[x_len-1,:]
+		x_dim = ob_ave[x_len-1,:]
+		x_diff = np.diff(x_dim[205:800])
 
-		x_loc = np.where(x_dim[200:800]>1.5)
+		x_loc = np.where(x_diff>2*abs(np.average(x_dim[205:800])))
 
-		f1_start = x_loc[0][0] + 200
-		f2_start = x_loc[0][-1] + 240
+		f1_start = x_loc[0][0] + 205
+		f2_start = x_loc[0][-1] + 245
 
 
 		x = sp.zeros((x_len*y_len))
@@ -100,4 +102,7 @@ def datafit(N_FILES):
 
 		corr_img = np.divide(new_ob, corr_ob)
 		corr_img = np.divide(corr_img, np.average(corr_img))
-		new_img = np.subtract(new_ob, corr)
+
+		matshow(corr_img, cmap=cm.hsv)
+		matshow(corr_img[:,f1_start:f2_start], cmap=cm.hsv)
+		colorbar()
