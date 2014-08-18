@@ -29,8 +29,11 @@ def crop(N_FILES):
 
 def datafit(N_FILES):
 	for i in range(N_FILES):
-		fileloc = '/mnt/xfm0/people/kwiecien/opt_obj/raw_cropped/'
-		filename = 'mda{:d}_crop_angle'.format(309+(i*2))
+		fileloc = '/mnt/xfm0/people/kwiecien/opt_obj/'
+		filename = 'mda{:d}_optimized_object.csv'.format(309+(i*2))
+
+		output_loc = '/mnt/xfm0/people/kwiecien/opt_obj/fit_images/mda{:d}_fit'.format(309+(i*2))
+		print "fileset {:d}".format(309+(i*2))
 
 		ob = np.genfromtxt(filename, delimiter=',', dtype=complex)
 
@@ -43,17 +46,18 @@ def datafit(N_FILES):
 		yi,yf = c[0][0], c[0][-1]
 		xi,xf = d[0][0], d[0][-1]
 
-		new_ob = np.angle(ob[yi+20:yf-20, xi+20:xf-20])
+		new_ob = (ob[yi+40:yf-40, xi+20:xf-20])
 		x_len, y_len = shape(new_ob)
 		ob_ave = new_ob / np.average(new_ob)
 
 		x_dim = ob_ave[x_len-1,:]
-		x_diff = np.diff(x_dim[205:800])
+		y_dim = []
+		for i in range(len(x_dim)):
+			y_dim.append(i)
 
-		x_loc = np.where(x_diff>2*abs(np.average(x_dim[205:800])))
 
-		f1_start = x_loc[0][0] + 205
-		f2_start = x_loc[0][-1] + 245
+		f1_start = raw_input("start?")
+		f2_start = raw_input("end?")
 
 
 		x = sp.zeros((x_len*y_len))
@@ -67,7 +71,7 @@ def datafit(N_FILES):
 				else:
 					x[cnt] = i
 					y[cnt] = j
-					z[cnt] = new_ob[i,j]
+					z[cnt] = np.angle(new_ob[i,j])
 
 				cnt+=1
 
@@ -77,7 +81,7 @@ def datafit(N_FILES):
 
 		errfunc = lambda p,x,y,z: abs(fitfunc(p,x,y)-z)
 
-		p0 = [1, 1, 1, 1, 1, 1, 1, 1, 1]
+		p0 = [1, 0, 0, 0, 0, 0, 0, 0, 0]
 
 		p1, success = optimize.leastsq(errfunc, p0[:], args=(x,y,z))
 
@@ -89,20 +93,20 @@ def datafit(N_FILES):
 				xn[cnt2] = i
 				yn[cnt2] = j
 
-			cnt2 +=1
-		
+				cnt2 +=1
+
 		count=0
 		corr_ob = sp.zeros(shape(new_ob))
 		corr = fitfunc(p1,xn,yn)
+
 		for i in range(x_len):
 			for j in range(y_len):
 				corr_ob[i,j]=corr[count]
-			count+=1
+				count+=1
 
 
-		corr_img = np.divide(new_ob, corr_ob)
+		corr_img = np.subtract(np.angle(new_ob), corr_ob)
 		corr_img = np.divide(corr_img, np.average(corr_img))
 
-		matshow(corr_img, cmap=cm.hsv)
-		matshow(corr_img[:,f1_start:f2_start], cmap=cm.hsv)
-		colorbar()
+		imsave(output_loc+'_full.png', corr_img, cmap=cm.hsv)
+		imsave(output_loc+'_crop.png', corr_img[:,int(f1_start):int(f2_start)], cmap=cm.hsv)
