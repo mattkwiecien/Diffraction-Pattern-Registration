@@ -68,6 +68,8 @@ def datafit(N_FILES,pixel_dict):
 
 		new_ob = (ob[(yf-480)+40:yf-40, xi+20:xf-20])
 		x_len, y_len = shape(new_ob)
+		matshow(np.angle(new_ob))
+		show()
 
 		pixel=pixel_dict[i][1]
 
