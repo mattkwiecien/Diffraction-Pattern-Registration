@@ -5,6 +5,7 @@ from PIL import Image
 import scipy as sp
 import scipy.fftpack as spf
 from scipy import misc
+import time
 
 def phase_corr(a, b):
 	tmp = spf.fft2(a)*spf.fft2(b).conj()
@@ -15,23 +16,64 @@ def maxval(arr):
 	maxi = np.argmax(arr)
 	return sp.unravel_index(maxi,arr.shape), arr.max()
 
-def mpix(N_FILES):
+def padder(N_FILES):
 	fileset = 'mda{:d}_array.npz.npy'
-	max_dict={}
+	
 	for i in range(N_FILES):
-		fn1=fileset.format(309+(i*2))
-		fn2=fileset.format(309+((i+1)*2))
-		ob1=np.load(fn1)
-		ob2=np.load(fn2)
-		description=""
-		description=fn1+' and '+fn2
+		fn = fileset.format(309+(i*2))
+		ob = np.load(fn)
+		pad = np.pad(ob, (400,400), 'constant', constant_values=(0))
+		setn='{:d}'.format(309+(i*2))
+		
+		np.save('/home/oxygen39/B241212/alignment/padded_arrays/padded_mda_'+setn, pad)
 
-		index, maxx = maxval(phase_corr(ob1,ob2))
+def mpix(N_FILES):
+	num_loc='/home/oxygen39/B241212/alignment/numpy_arrays/'
+	roll_loc = '/home/oxygen39/B241212/alignment/rolled_arrays/'
+	pad_loc='/home/oxygen39/B241212/alignment/padded_arrays/'
 
-		roll_ob2=np.roll( np.roll(ob2,index[0],axis=0) , index[1], axis=1)
+	for i in range(N_FILES):
+		if i ==0:
+			fn1=pad_loc+'padded_mda_{:d}.npy'.format(309+(i*2))
+			fn2=pad_loc+'padded_mda_{:d}.npy'.format(309+(i*2))
+			#fn2=num_loc+'mda{:d}_array.npz.npy'.format(309+((i+1)*2))
+			ob1=np.load(fn1)
+			ob2=np.load(fn2)
 
-		max_dict[i]= description, index, maxx
-	return max_dict
+			# a=np.pad(ob1, (400,400), 'constant', constant_values=(0))
+			# b=np.pad(ob2, (400,400), 'constant', constant_values=(0))
+
+			index, maxx = maxval(phase_corr(ob1,ob2))
+			roll_ob2=np.roll( np.roll(ob2,index[0],axis=0) , index[1], axis=1)
+
+			#c=np.where(roll_ob2>-400000)
+			#resize_b=roll_ob2[c[0][0]:c[0][-1]+1,c[1][0]:c[1][-1]+1]
+
+			np.save(roll_loc+'mda311_roll', roll_ob2)
+			imsave(roll_loc+'mda311_img', roll_ob2, cmap=cm.hsv)
+
+		else:
+
+			fn1=roll_loc+'mda{:d}_roll.npy'.format(309+(i*2))
+			fn2=pad_loc+'padded_mda_{:d}.npy'.format(309+((i+1)*2))
+			
+			ob1=np.load(fn1)
+			ob2=np.load(fn2)
+
+			# a=np.pad(ob1, (400,400), 'constant', constant_values=(0))
+			# b=np.pad(ob2, (400,400), 'constant', constant_values=(0))
+
+			index, maxx = maxval(phase_corr(ob1,ob2))
+			roll_ob2=np.roll( np.roll(ob2,index[0],axis=0) , index[1], axis=1)
+
+			# c=np.where(roll_ob2>-400000)
+			# resize_b=roll_ob2[c[0][0]:c[0][-1]+1,c[1][0]:c[1][-1]+1]
+
+			#print resize_b.shape, 309+(i*2)
+
+			np.save(roll_loc+'mda{:d}_roll'.format(309+((i+1)*2)), roll_ob2)
+			imsave(roll_loc+'mda{:d}_padimg'.format(309+((i+1)*2)), roll_ob2, cmap=cm.hsv)
+
 
 def crop(N_FILES):
 	for i in range(N_FILES):
